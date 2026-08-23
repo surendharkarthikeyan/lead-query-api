@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-schema-update
+      author: surendhar
+
+      changes:
+
+        # Add status to tenants
+        - addColumn:
+            tableName: tenants
+            columns:
+              - column:
+                  name: status
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+        # Add status to users
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: status
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+        # Add default value to existing roles.created_at
+        - addDefaultValue:
+            tableName: roles
+            columnName: created_at
+            columnDataType: TIMESTAMP WITH TIME ZONE
+            defaultValueDate: "2026-08-23T00:00:00+05:30"
+
+        # Add new roles.updated_at column
+        - addColumn:
+            tableName: roles
+            columns:
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueDate: "2026-08-23T00:00:00+05:30"
+                  constraints:
+                    nullable: false

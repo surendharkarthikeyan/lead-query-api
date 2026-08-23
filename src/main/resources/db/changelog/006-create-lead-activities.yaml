@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-lead-activities
+      author: surendhar
+
+      changes:
+
+        - createTable:
+            tableName: lead_activities
+
+            columns:
+
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: lead_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: activity_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: TEXT
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: lead_activities
+            baseColumnNames: lead_id
+            referencedTableName: leads
+            referencedColumnNames: id
+            constraintName: fk_lead_activities_lead
+
+        - addForeignKeyConstraint:
+            baseTableName: lead_activities
+            baseColumnNames: tenant_id
+            referencedTableName: tenants
+            referencedColumnNames: id
+            constraintName: fk_lead_activities_tenant
+
+        - addForeignKeyConstraint:
+            baseTableName: lead_activities
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_lead_activities_user
+
+        - createIndex:
+            tableName: lead_activities
+            indexName: idx_lead_activities_lead_id
+            columns:
+              - column:
+                  name: lead_id
+
+        - createIndex:
+            tableName: lead_activities
+            indexName: idx_lead_activities_tenant_id
+            columns:
+              - column:
+                  name: tenant_id

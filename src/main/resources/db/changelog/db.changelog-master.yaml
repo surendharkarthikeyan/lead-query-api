@@ -1,0 +1,31 @@
+databaseChangeLog:
+
+  - include:
+      file: db/changelog/001-create-tenants.yaml
+
+  - include:
+      file: db/changelog/002-create-users.yaml
+
+  - include:
+      file: db/changelog/003-create-roles.yaml
+
+  - include:
+      file: db/changelog/004-create-user-roles.yaml
+
+  - include:
+      file: db/changelog/005-create-leads.yaml
+
+  - include:
+      file: db/changelog/006-create-lead-activities.yaml
+
+  - include:
+      file: db/changelog/007-create-custom-fields.yaml
+
+  - include:
+      file: db/changelog/008-create-lead-custom-field-values.yaml
+
+  - include:
+      file: db/changelog/009-schema-update.yaml
+
+  - include:
+      file: db/changelog/010-seed-data.yaml
