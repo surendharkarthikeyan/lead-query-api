@@ -1,0 +1,131 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-leads
+      author: surendhar
+
+      changes:
+
+        - createTable:
+            tableName: leads
+
+            columns:
+
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: phone
+                  type: VARCHAR(30)
+
+              - column:
+                  name: country_code
+                  type: VARCHAR(10)
+
+              - column:
+                  name: e164
+                  type: VARCHAR(30)
+
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+
+              - column:
+                  name: assigned_to
+                  type: UUID
+
+              - column:
+                  name: follow_up_date
+                  type: DATE
+
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: notes
+                  type: TEXT
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: leads
+            baseColumnNames: tenant_id
+            referencedTableName: tenants
+            referencedColumnNames: id
+            constraintName: fk_leads_tenant
+
+        - addForeignKeyConstraint:
+            baseTableName: leads
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_leads_created_by
+
+        - addForeignKeyConstraint:
+            baseTableName: leads
+            baseColumnNames: assigned_to
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_leads_assigned_to
+
+        - createIndex:
+            tableName: leads
+            indexName: idx_leads_tenant_id
+            columns:
+              - column:
+                  name: tenant_id
+
+        - createIndex:
+            tableName: leads
+            indexName: idx_leads_assigned_to
+            columns:
+              - column:
+                  name: assigned_to
+
+        - createIndex:
+            tableName: leads
+            indexName: idx_leads_follow_up_date
+            columns:
+              - column:
+                  name: follow_up_date
+
+        - createIndex:
+            tableName: leads
+            indexName: idx_leads_created_at
+            columns:
+              - column:
+                  name: created_at

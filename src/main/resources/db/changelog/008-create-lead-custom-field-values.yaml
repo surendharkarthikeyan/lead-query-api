@@ -1,0 +1,79 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-create-lead-custom-field-values
+      author: surendhar
+
+      changes:
+
+        - createTable:
+            tableName: lead_custom_field_values
+
+            columns:
+
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: lead_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: field_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: value
+                  type: TEXT
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: lead_custom_field_values
+            baseColumnNames: lead_id
+            referencedTableName: leads
+            referencedColumnNames: id
+            constraintName: fk_lcfv_lead
+
+        - addForeignKeyConstraint:
+            baseTableName: lead_custom_field_values
+            baseColumnNames: field_id
+            referencedTableName: custom_fields
+            referencedColumnNames: id
+            constraintName: fk_lcfv_custom_field
+
+        - addUniqueConstraint:
+            tableName: lead_custom_field_values
+            columnNames: lead_id, field_id
+            constraintName: uk_lcfv_lead_field
+
+        - createIndex:
+            tableName: lead_custom_field_values
+            indexName: idx_lcfv_lead_id
+            columns:
+              - column:
+                  name: lead_id
+
+        - createIndex:
+            tableName: lead_custom_field_values
+            indexName: idx_lcfv_field_id
+            columns:
+              - column:
+                  name: field_id

@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-user-roles
+      author: surendhar
+      changes:
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: role_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: assigned_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: assigned_by
+                  type: UUID
+
+        - addPrimaryKey:
+            tableName: user_roles
+            columnNames: user_id, role_id
+            constraintName: pk_user_roles
+
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_user_roles_user
+
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            constraintName: fk_user_roles_role
+
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: assigned_by
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_user_roles_assigned_by
