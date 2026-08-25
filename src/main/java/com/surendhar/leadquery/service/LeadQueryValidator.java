@@ -5,6 +5,7 @@ import com.surendhar.leadquery.dto.FilterFieldType;
 import com.surendhar.leadquery.dto.LeadFilter;
 import com.surendhar.leadquery.dto.QueryLeadsRequest;
 import com.surendhar.leadquery.exception.BadRequestException;
+import com.surendhar.leadquery.util.SystemFieldMapper;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -125,6 +126,16 @@ public class LeadQueryValidator {
             );
         }
 
+        if (!SystemFieldMapper.isSystemField(filter.fieldId())) {
+            try {
+                UUID.fromString(filter.fieldId());
+            } catch (IllegalArgumentException exception) {
+                throw new BadRequestException(
+                        "Invalid custom field UUID: " + filter.fieldId()
+                );
+            }
+        }
+
         if (filter.fieldType() == null) {
             throw new BadRequestException(
                     "fieldType is required"
@@ -142,7 +153,45 @@ public class LeadQueryValidator {
                 filter.condition()
         );
 
+        validateSystemCondition(filter);
+
         validateValue(filter);
+    }
+
+    private void validateSystemCondition(LeadFilter filter) {
+        String fieldId = filter.fieldId();
+
+        if (fieldId.equals("assignedTo") || fieldId.equals("createdBy")) {
+            boolean multiselect = "multiselect".equalsIgnoreCase(
+                    filter.inputType()
+            );
+
+            Set<FilterCondition> allowed = multiselect
+                    ? Set.of(
+                            FilterCondition.IS,
+                            FilterCondition.IS_NOT,
+                            FilterCondition.CONTAIN,
+                            FilterCondition.DOES_NOT_CONTAIN
+                    )
+                    : Set.of(
+                            FilterCondition.IS,
+                            FilterCondition.IS_NOT
+                    );
+
+            if (fieldId.equals("assignedTo")) {
+                allowed = new HashSet<>(allowed);
+                allowed.add(FilterCondition.IS_EMPTY);
+                allowed.add(FilterCondition.IS_NOT_EMPTY);
+            }
+
+            if (!allowed.contains(filter.condition())) {
+                throw new BadRequestException(
+                        "Condition \"" + filter.condition() +
+                                "\" is not supported for system field \"" +
+                                fieldId + "\""
+                );
+            }
+        }
     }
 
     private void validateCondition(
@@ -210,6 +259,20 @@ public class LeadQueryValidator {
             );
         }
 
+        if (filter.fieldId().equals("assignedTo")
+                || filter.fieldId().equals("createdBy")) {
+            String[] values = filter.value().split(",");
+            for (String uuidValue : values) {
+                try {
+                    UUID.fromString(uuidValue.trim());
+                } catch (IllegalArgumentException exception) {
+                    throw new BadRequestException(
+                            "Invalid UUID value: " + uuidValue.trim()
+                    );
+                }
+            }
+        }
+
         switch (filter.fieldType()) {
 
             case NUMBER -> validateNumber(filter.value());
@@ -227,13 +290,14 @@ public class LeadQueryValidator {
     private void validateNumber(String value) {
 
         try {
-            Double.parseDouble(value);
+            new java.math.BigDecimal(value);
         } catch (NumberFormatException exception) {
 
             throw new BadRequestException(
                     "Invalid number value: " + value
             );
         }
+
     }
 
     private void validateDate(String value) {

@@ -1,8 +1,8 @@
 package com.surendhar.leadquery.controller;
 
+import com.surendhar.leadquery.dto.LeadQueryResponse;
 import com.surendhar.leadquery.dto.QueryLeadsRequest;
-import com.surendhar.leadquery.security.CurrentUser;
-import com.surendhar.leadquery.security.CurrentUserContext;
+import com.surendhar.leadquery.service.LeadQueryService;
 import com.surendhar.leadquery.service.LeadQueryValidator;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,18 +11,18 @@ import org.springframework.web.bind.annotation.*;
 public class LeadQueryController {
 
     private final LeadQueryValidator validator;
-    private final CurrentUserContext currentUserContext;
+    private final LeadQueryService leadQueryService;
 
     public LeadQueryController(
             LeadQueryValidator validator,
-            CurrentUserContext currentUserContext
+            LeadQueryService leadQueryService
     ) {
         this.validator = validator;
-        this.currentUserContext = currentUserContext;
+        this.leadQueryService = leadQueryService;
     }
 
     @PostMapping("/query")
-    public CurrentUser queryLeads(
+        public LeadQueryResponse queryLeads(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -38,6 +38,12 @@ public class LeadQueryController {
                 request
         );
 
-        return currentUserContext.getCurrentUser();
+        return leadQueryService.queryLeads(
+                page,
+                limit,
+                sortBy,
+                sortDirection,
+                request
+        );
     }
 }
