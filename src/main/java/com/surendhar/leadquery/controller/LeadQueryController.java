@@ -1,12 +1,10 @@
 package com.surendhar.leadquery.controller;
 
-import com.surendhar.leadquery.dto.LeadResponse;
+import com.surendhar.leadquery.dto.LeadQueryResponse;
 import com.surendhar.leadquery.dto.QueryLeadsRequest;
 import com.surendhar.leadquery.service.LeadQueryService;
 import com.surendhar.leadquery.service.LeadQueryValidator;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/leads")
@@ -24,7 +22,7 @@ public class LeadQueryController {
     }
 
     @PostMapping("/query")
-    public List<LeadResponse> queryLeads(
+        public LeadQueryResponse queryLeads(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "createdAt") String sortBy,

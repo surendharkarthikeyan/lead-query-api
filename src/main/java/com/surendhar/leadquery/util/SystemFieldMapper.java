@@ -11,6 +11,7 @@ public final class SystemFieldMapper {
             "name", "name",
             "phone", "phone",
             "email", "email",
+            "e164", "e164",
             "assignedTo", "assigned_to",
             "createdBy", "user_id",
             "followUpDate", "follow_up_date",

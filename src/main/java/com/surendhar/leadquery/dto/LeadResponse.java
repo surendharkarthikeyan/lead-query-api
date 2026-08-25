@@ -2,6 +2,7 @@ package com.surendhar.leadquery.dto;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record LeadResponse(
@@ -18,6 +19,27 @@ public record LeadResponse(
         String status,
         String notes,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+                OffsetDateTime updatedAt,
+                List<CustomFieldValue> customFields
 ) {
+
+        public LeadResponse withCustomFields(List<CustomFieldValue> values) {
+                return new LeadResponse(
+                                id,
+                                tenantId,
+                                userId,
+                                name,
+                                phone,
+                                countryCode,
+                                e164,
+                                email,
+                                assignedTo,
+                                followUpDate,
+                                status,
+                                notes,
+                                createdAt,
+                                updatedAt,
+                                values
+                );
+        }
 }

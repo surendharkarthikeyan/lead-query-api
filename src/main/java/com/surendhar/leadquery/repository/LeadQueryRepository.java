@@ -2,6 +2,7 @@ package com.surendhar.leadquery.repository;
 
 import com.surendhar.leadquery.dto.LeadFilter;
 import com.surendhar.leadquery.dto.LeadResponse;
+import com.surendhar.leadquery.dto.CustomFieldValue;
 import com.surendhar.leadquery.util.SystemFieldMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -9,7 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Repository
@@ -21,8 +24,10 @@ public class LeadQueryRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<LeadResponse> findLeadsByTenant(
+    public LeadQueryResult findLeadsByTenant(
             UUID tenantId,
+            UUID userId,
+            String role,
             int limit,
             int offset,
             String sortBy,
@@ -93,6 +98,11 @@ public class LeadQueryRepository {
         // First ? -> tenant_id
         parameters.add(tenantId);
 
+                if ("agent".equalsIgnoreCase(role)) {
+                        sql.append(" AND assigned_to = ? ");
+                        parameters.add(userId);
+                }
+
 
         /*
          * ---------------------------------------------------------
@@ -124,7 +134,6 @@ public class LeadQueryRepository {
             parameters.add(searchValue);
             parameters.add(searchValue);
         }
-
 
         /*
          * ---------------------------------------------------------
@@ -185,6 +194,9 @@ public class LeadQueryRepository {
             }
         }
 
+                String countSql = sql.toString();
+                Object[] countParameters = parameters.toArray();
+
 
         /*
          * ---------------------------------------------------------
@@ -200,10 +212,13 @@ public class LeadQueryRepository {
          */
 
         sql.append(
-                " ORDER BY %s %s "
+                " ORDER BY %s %s %s "
                         .formatted(
                                 orderByColumn,
-                                direction
+                                direction,
+                                "follow_up_date".equals(orderByColumn)
+                                        ? "NULLS LAST"
+                                        : ""
                         )
         );
 
@@ -236,7 +251,7 @@ public class LeadQueryRepository {
          * 4. RowMapper converts each row to LeadResponse
          */
 
-        return jdbcTemplate.query(
+        List<LeadResponse> leads = jdbcTemplate.query(
                 sql.toString(),
 
                 (rs, rowNum) -> new LeadResponse(
@@ -288,10 +303,66 @@ public class LeadQueryRepository {
                         rs.getObject(
                                 "updated_at",
                                 OffsetDateTime.class
-                        )
+                        ),
+
+                        List.of()
                 ),
 
                 parameters.toArray()
         );
+
+        long totalRecords = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM (" + countSql + ") matching_leads",
+                Long.class,
+                countParameters
+        );
+
+        hydrateCustomFields(leads);
+        return new LeadQueryResult(leads, totalRecords);
+    }
+
+    private void hydrateCustomFields(List<LeadResponse> leads) {
+        if (leads.isEmpty()) {
+            return;
+        }
+
+        String placeholders = String.join(", ", leads.stream()
+                .map(lead -> "?")
+                .toList());
+
+        Map<UUID, List<CustomFieldValue>> valuesByLead = new HashMap<>();
+        jdbcTemplate.query(
+                """
+                SELECT lcfv.lead_id, lcfv.field_id, cf.label, lcfv.value
+                FROM lead_custom_field_values lcfv
+                JOIN custom_fields cf ON cf.id = lcfv.field_id
+                WHERE lcfv.lead_id IN (%s)
+                ORDER BY lcfv.lead_id, cf.label
+                """.formatted(placeholders),
+                (rs, rowNum) -> {
+                    UUID leadId = rs.getObject("lead_id", UUID.class);
+                    valuesByLead.computeIfAbsent(leadId, ignored -> new ArrayList<>())
+                            .add(new CustomFieldValue(
+                                    rs.getObject("field_id", UUID.class),
+                                    rs.getString("label"),
+                                    rs.getString("value")
+                            ));
+                    return null;
+                },
+                leads.stream().map(LeadResponse::id).toArray()
+        );
+
+        for (int index = 0; index < leads.size(); index++) {
+            LeadResponse lead = leads.get(index);
+            leads.set(index, lead.withCustomFields(
+                    valuesByLead.getOrDefault(lead.id(), List.of())
+            ));
+        }
+    }
+
+    public record LeadQueryResult(
+            List<LeadResponse> data,
+            long totalRecords
+    ) {
     }
 }

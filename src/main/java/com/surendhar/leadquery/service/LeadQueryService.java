@@ -1,7 +1,7 @@
 package com.surendhar.leadquery.service;
 
 import com.surendhar.leadquery.dto.LeadFilter;
-import com.surendhar.leadquery.dto.LeadResponse;
+import com.surendhar.leadquery.dto.LeadQueryResponse;
 import com.surendhar.leadquery.dto.QueryLeadsRequest;
 import com.surendhar.leadquery.repository.LeadQueryRepository;
 import com.surendhar.leadquery.security.CurrentUserContext;
@@ -24,7 +24,7 @@ public class LeadQueryService {
         this.currentUserContext = currentUserContext;
     }
 
-    public List<LeadResponse> queryLeads(
+        public LeadQueryResponse queryLeads(
             int page,
             int limit,
             String sortBy,
@@ -83,15 +83,34 @@ public class LeadQueryService {
          * ---------------------------------------------------------
          */
 
-        return leadQueryRepository.findLeadsByTenant(
-                tenantId,
-                limit,
-                offset,
-                sortBy,
-                sortDirection,
-                q,
-                filters,
-                logic
+        LeadQueryRepository.LeadQueryResult result =
+                leadQueryRepository.findLeadsByTenant(
+                        tenantId,
+                        UUID.fromString(currentUserContext.getCurrentUser().userId()),
+                        currentUserContext.getCurrentUser().role(),
+                        limit,
+                        offset,
+                        sortBy,
+                        sortDirection,
+                        q,
+                        filters,
+                        logic
+                );
+
+        int totalPages = (int) Math.ceil(
+                (double) result.totalRecords() / limit
+        );
+
+        return new LeadQueryResponse(
+                "success",
+                "Leads fetched successfully",
+                result.data(),
+                new LeadQueryResponse.Meta(
+                        page,
+                        limit,
+                        result.totalRecords(),
+                        totalPages
+                )
         );
     }
 }
